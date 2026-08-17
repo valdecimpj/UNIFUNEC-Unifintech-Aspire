@@ -1,0 +1,28 @@
+name: Test Unifintech on pull request
+
+on:
+  pull_request:
+    branches: [main, development]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    if: github.event.repository.fork == false
+    working-directory: ./Unifintech
+    name: dotnet test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '10.x'
+
+    - name: Install dependencies
+      run: dotnet restore
+
+    - name: Run tests
+      run: dotnet test
