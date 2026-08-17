@@ -1,8 +1,8 @@
-using Unifintech.Application.Common.Interfaces;
-using Unifintech.Application.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Unifintech.Application.Common.Interfaces;
+using Unifintech.Application.Common.Models;
 
 namespace Unifintech.Infrastructure.Identity;
 
@@ -15,7 +15,8 @@ public class IdentityService : IIdentityService
     public IdentityService(
         UserManager<ApplicationUser> userManager,
         IUserClaimsPrincipalFactory<ApplicationUser> userClaimsPrincipalFactory,
-        IAuthorizationService authorizationService)
+        IAuthorizationService authorizationService
+    )
     {
         _userManager = userManager;
         _userClaimsPrincipalFactory = userClaimsPrincipalFactory;
@@ -29,13 +30,12 @@ public class IdentityService : IIdentityService
         return user?.UserName;
     }
 
-    public async Task<(Result Result, string UserId)> CreateUserAsync(string userName, string password)
+    public async Task<(Result Result, string UserId)> CreateUserAsync(
+        string userName,
+        string password
+    )
     {
-        var user = new ApplicationUser
-        {
-            UserName = userName,
-            Email = userName,
-        };
+        var user = new ApplicationUser { UserName = userName, Email = userName };
 
         var result = await _userManager.CreateAsync(user, password);
 
@@ -77,5 +77,17 @@ public class IdentityService : IIdentityService
         var result = await _userManager.DeleteAsync(user);
 
         return result.ToApplicationResult();
+    }
+
+    public Task<Result> AddUserToRoleAsync(string userId, string role)
+    {
+        var user = _userManager.Users.FirstOrDefault(u => u.Id == userId);
+
+        if (user == null)
+            return Task.FromResult(Result.Failure(new[] { "User not found." }));
+
+        var result = _userManager.AddToRoleAsync(user, role);
+
+        return result.ContinueWith(t => t.Result.ToApplicationResult());
     }
 }

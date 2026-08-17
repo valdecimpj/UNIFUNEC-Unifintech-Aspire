@@ -1,17 +1,19 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Unifintech.Application.Common.Interfaces;
 using Unifintech.Domain.Common;
+using Unifintech.Infrastructure.Extensions;
 
 namespace Unifintech.Infrastructure.Data.Interceptors;
 
 public class DispatchDomainEventsInterceptor : SaveChangesInterceptor
 {
-    private readonly IMediator _mediator;
+    private readonly IEventPublisherService _eventPublisherService;
 
-    public DispatchDomainEventsInterceptor(IMediator mediator)
+    public DispatchDomainEventsInterceptor(IEventPublisherService eventPublisherService)
     {
-        _mediator = mediator;
+        _eventPublisherService = eventPublisherService;
     }
 
     public override InterceptionResult<int> SavingChanges(
@@ -47,9 +49,12 @@ public class DispatchDomainEventsInterceptor : SaveChangesInterceptor
 
         var domainEvents = entities.SelectMany(e => e.DomainEvents).ToList();
 
-        entities.ToList().ForEach(e => e.ClearDomainEvents());
-
         foreach (var domainEvent in domainEvents)
-            await _mediator.Publish(domainEvent);
+            await _eventPublisherService.PublishAsync(
+                domainEvent,
+                domainEvent.GetType().Name.ToKebabCase()
+            );
+
+        entities.ToList().ForEach(e => e.ClearDomainEvents());
     }
 }

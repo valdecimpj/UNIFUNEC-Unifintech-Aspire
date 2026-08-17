@@ -2,25 +2,27 @@ using Unifintech.Shared;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddAzureContainerAppEnvironment("aca-env");
+var databaseServer = builder.AddPostgres(Services.DatabaseServer).AddDatabase(Services.Database);
 
-var databaseServer = builder
-    .AddAzurePostgresFlexibleServer(Services.DatabaseServer)
-    .WithPasswordAuthentication()
-    .RunAsContainer(container => 
-        container.WithLifetime(ContainerLifetime.Persistent))
-    .AddDatabase(Services.Database);
+var kafka = builder.AddKafka("kafka").WithKafkaUI();
 
-var web = builder.AddProject<Projects.Web>(Services.WebApi)
+var redis = builder.AddRedis("redis");
+
+var web = builder
+    .AddProject<Projects.Web>(Services.WebApi)
     .WithReference(databaseServer)
+    .WithReference(kafka)
+    .WithReference(redis)
     .WaitFor(databaseServer)
     .WithExternalHttpEndpoints()
     .WithAspNetCoreEnvironment()
-    .WithUrlForEndpoint("http", url =>
-    {
-        url.DisplayText = "Scalar API Reference";
-        url.Url = "/scalar";
-    });
-
+    .WithUrlForEndpoint(
+        "http",
+        url =>
+        {
+            url.DisplayText = "Scalar API Reference";
+            url.Url = "/scalar";
+        }
+    );
 
 builder.Build().Run();
