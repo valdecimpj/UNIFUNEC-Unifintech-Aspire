@@ -1,0 +1,42 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/dotnet
+{
+	"name": "C# (.NET)",
+	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	"image": "mcr.microsoft.com/devcontainers/dotnet:2-10.0-noble",
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:4": {},
+		"ghcr.io/nikiforovall/devcontainer-features/dotnet-csharpier:1": {}
+	},
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [5000, 5001],
+	// "portsAttributes": {
+	//		"5001": {
+	//			"protocol": "https"
+	//		}
+	// }
+	// Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "dotnet tool install -g csharpier && dotnet tool install -g dotnet-ef && dotnet new install Ardalis.CleanArchitecture.Template && dotnet tool install -g Aspire.Cli",
+	// Configure tool-specific properties.
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"kreativ-software.csharpextensions",
+				"csharpier.csharpier-vscode",
+				"patcx.vscode-nuget-gallery",
+				"csharpier.csharpier-vscode",
+				"microsoft-aspire.aspire-vscode"
+			],
+			"settings": {
+				"editor.formatOnSave": true,
+				"[csharp]": {
+					"editor.defaultFormatter": "csharpier.csharpier-vscode"
+				}
+			}
+		}
+	}
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}
