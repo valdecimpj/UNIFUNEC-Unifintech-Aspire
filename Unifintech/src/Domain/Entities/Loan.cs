@@ -11,7 +11,6 @@ namespace Unifintech.Domain.Entities
 
         public Loan()
         {
-            AddDomainEvent(new LoanCreatedEvent { Loan = this });
             LoanStatus = LoanStatus.Pending;
         }
     }

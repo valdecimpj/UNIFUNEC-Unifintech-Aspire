@@ -1,6 +1,7 @@
 using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
 using Unifintech.Application.Common.Interfaces;
+using Unifintech.Infrastructure.Extensions;
 
 namespace Unifintech.Infrastructure.Pub;
 
@@ -25,10 +26,11 @@ public class KafkaEventPublisherService : IEventPublisherService
 
     public async Task PublishAsync<TEvent>(
         TEvent @event,
-        string topicName,
         CancellationToken cancellationToken = default
     )
     {
+        var topicName = @event.GetType().Name.ToKebabCase();
+
         using var producer = new ProducerBuilder<Null, string>(_producerConfig).Build();
 
         if (@event == null)

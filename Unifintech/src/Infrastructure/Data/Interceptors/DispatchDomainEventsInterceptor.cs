@@ -50,10 +50,7 @@ public class DispatchDomainEventsInterceptor : SaveChangesInterceptor
         var domainEvents = entities.SelectMany(e => e.DomainEvents).ToList();
 
         foreach (var domainEvent in domainEvents)
-            await _eventPublisherService.PublishAsync(
-                domainEvent,
-                domainEvent.GetType().Name.ToKebabCase()
-            );
+            await _eventPublisherService.PublishAsync(domainEvent);
 
         entities.ToList().ForEach(e => e.ClearDomainEvents());
     }

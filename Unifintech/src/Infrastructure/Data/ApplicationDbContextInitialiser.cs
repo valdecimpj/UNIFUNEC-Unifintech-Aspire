@@ -104,6 +104,21 @@ public class ApplicationDbContextInitialiser
             }
         }
 
+        var employee = new ApplicationUser
+        {
+            UserName = "employee@localhost",
+            Email = "employee@localhost",
+        };
+
+        if (_userManager.Users.All(u => u.UserName != employee.UserName))
+        {
+            await _userManager.CreateAsync(employee, "Employee1!");
+            if (!string.IsNullOrWhiteSpace(employeeRole.Name))
+            {
+                await _userManager.AddToRolesAsync(employee, new[] { employeeRole.Name });
+            }
+        }
+
         // Default data
         // Seed, if necessary
     }

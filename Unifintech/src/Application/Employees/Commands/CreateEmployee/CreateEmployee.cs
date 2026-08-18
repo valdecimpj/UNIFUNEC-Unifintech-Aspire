@@ -42,8 +42,8 @@ public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeComman
     )
     {
         var (result, userId) = await _identityService.CreateUserAsync(
-            request.Email,
-            request.Password
+            request.Email!,
+            request.Password!
         );
 
         if (!result.Succeeded)

@@ -1,8 +1,8 @@
 using Azure.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Unifintech.Application.Common.Interfaces;
 using Unifintech.Domain.Events;
-using Unifintech.Infrastructure.Data;
 using Unifintech.Infrastructure.Extensions;
 using Unifintech.Infrastructure.Pub;
 using Unifintech.Infrastructure.Sub;
@@ -20,9 +20,16 @@ public static class DependencyInjection
 
         builder.Services.AddHttpContextAccessor();
 
+        builder.Services.AddSignalR();
+        builder.Services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
+
+        builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
         builder.Services.AddExceptionHandler<ProblemDetailsExceptionHandler>();
 
         builder.Services.AddTransient<IEventPublisherService, KafkaEventPublisherService>();
+
+        builder.Services.AddTransient<IUserNotificationService, SignalRNotificationService>();
 
         builder.AddKafkaConsumerWorkers();
 
@@ -46,6 +53,7 @@ public static class DependencyInjection
     private static void AddKafkaConsumerWorkers(this IHostApplicationBuilder builder)
     {
         builder.Services.AddKafkaConsumerWorker<LoanCreatedEvent>();
+        builder.Services.AddKafkaConsumerWorker<EmployeeFiredEvent>();
     }
 
     private static IServiceCollection AddKafkaConsumerWorker<TEvent>(

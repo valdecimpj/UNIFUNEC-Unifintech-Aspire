@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authentication.BearerToken;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Unifintech.Application.Common.Interfaces;
+using Unifintech.Infrastructure.Cache;
 using Unifintech.Infrastructure.Data;
 using Unifintech.Infrastructure.Data.Interceptors;
 using Unifintech.Infrastructure.Identity;
@@ -42,7 +44,9 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
 
-        builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme);
+        builder
+            .Services.AddAuthentication()
+            .AddBearerToken(IdentityConstants.BearerScheme, ConfigureWebsocketAuthentication());
 
         builder.Services.AddAuthorizationBuilder();
 
@@ -54,5 +58,38 @@ public static class DependencyInjection
 
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddTransient<IIdentityService, IdentityService>();
+        builder.AddRedis();
     }
+
+    private static void AddRedis(this IHostApplicationBuilder builder)
+    {
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration =
+                builder.Configuration.GetConnectionString("redis")
+                ?? throw new Exception("REDIS_CONNECTION_STRING not found in configuration.");
+        });
+
+        builder.Services.AddScoped<ICacheService, RedisCacheService>();
+    }
+
+    private static Action<BearerTokenOptions> ConfigureWebsocketAuthentication() =>
+        options =>
+        {
+            options.Events = new BearerTokenEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var accessToken = context.Request.Query["access_token"];
+                    var path = context.HttpContext.Request.Path;
+
+                    if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/ws"))
+                    {
+                        context.Token = accessToken!;
+                    }
+
+                    return Task.CompletedTask;
+                },
+            };
+        };
 }

@@ -1,5 +1,6 @@
 using Scalar.AspNetCore;
 using Unifintech.Infrastructure.Data;
+using Unifintech.Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +36,7 @@ app.MapScalarApiReference();
 app.UseExceptionHandler(options => { });
 
 app.Map("/", () => Results.Redirect("/scalar"));
+app.MapHub<EventHub>("/ws").RequireAuthorization();
 
 app.MapDefaultEndpoints();
 app.MapEndpoints(typeof(Program).Assembly);

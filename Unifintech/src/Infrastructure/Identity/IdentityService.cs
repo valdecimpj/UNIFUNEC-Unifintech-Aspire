@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Unifintech.Application.Common.Interfaces;
 using Unifintech.Application.Common.Models;
 
@@ -89,5 +88,15 @@ public class IdentityService : IIdentityService
         var result = _userManager.AddToRoleAsync(user, role);
 
         return result.ContinueWith(t => t.Result.ToApplicationResult());
+    }
+
+    public async Task<IList<string>> GetUserRolesAsync(string userId)
+    {
+        var user = _userManager.Users.FirstOrDefault(u => u.Id == userId);
+
+        if (user == null)
+            return new List<string>();
+
+        return await _userManager.GetRolesAsync(user);
     }
 }

@@ -10,7 +10,6 @@ public record CreateLoanCommand : IRequest<Guid>
 {
     public string? LoanId { get; init; }
     public string? CustomerId { get; init; }
-    public string? EmployeeId { get; init; }
     public decimal? InitialAmount { get; init; }
     public decimal? InterestRate { get; init; }
     public int? TermInMonths { get; init; }
@@ -23,8 +22,6 @@ public class CreateLoanCommandValidator : AbstractValidator<CreateLoanCommand>
         RuleFor(x => x.LoanId).NotEmpty().WithMessage("LoanId is required.");
 
         RuleFor(x => x.CustomerId).NotEmpty().WithMessage("CustomerId is required.");
-
-        RuleFor(x => x.EmployeeId).NotEmpty().WithMessage("EmployeeId is required.");
 
         RuleFor(x => x.InitialAmount)
             .GreaterThan(0)
@@ -43,15 +40,15 @@ public class CreateLoanCommandValidator : AbstractValidator<CreateLoanCommand>
 public class CreateLoanCommandHandler : IRequestHandler<CreateLoanCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IEventPublisherService _eventPublisherService;
+    private readonly ICurrentUserService _currentUserService;
 
     public CreateLoanCommandHandler(
         IApplicationDbContext context,
-        IEventPublisherService eventPublisherService
+        ICurrentUserService currentUserService
     )
     {
         _context = context;
-        _eventPublisherService = eventPublisherService;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Guid> Handle(CreateLoanCommand request, CancellationToken cancellationToken)
@@ -68,11 +65,13 @@ public class CreateLoanCommandHandler : IRequestHandler<CreateLoanCommand, Guid>
         {
             Id = Guid.Parse(request.LoanId!),
             CustomerId = Guid.Parse(request.CustomerId!),
-            EmployeeId = request.EmployeeId!,
+            EmployeeId = _currentUserService.GetCurrentUserId(),
             InitialAmount = request.InitialAmount!.Value,
             InterestRate = request.InterestRate!.Value,
             TermInMonths = request.TermInMonths!.Value,
         };
+
+        loan.AddDomainEvent(new LoanCreatedEvent { Loan = loan });
 
         _context.Loans.Add(loan);
         await _context.SaveChangesAsync(cancellationToken);

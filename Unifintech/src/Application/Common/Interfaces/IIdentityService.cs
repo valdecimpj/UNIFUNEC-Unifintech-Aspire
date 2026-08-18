@@ -15,4 +15,5 @@ public interface IIdentityService
     Task<Result> DeleteUserAsync(string userId);
 
     Task<Result> AddUserToRoleAsync(string userId, string role);
+    Task<IList<string>> GetUserRolesAsync(string userId);
 }
