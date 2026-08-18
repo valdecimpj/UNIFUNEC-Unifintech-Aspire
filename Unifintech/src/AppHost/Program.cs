@@ -14,12 +14,22 @@ var prometheus = builder
     .WithHttpEndpoint(port: 9090, targetPort: 9090, name: "http")
     .WithArgs("--config.file=/etc/prometheus/prometheus.yml", "--web.enable-otlp-receiver");
 
+var creditBureau = builder
+    .AddDockerfile("credit-bureau", "../../../credit_bureau")
+    .WithBuildArg("USER_ID", Environment.GetEnvironmentVariable("UID") ?? "1000")
+    .WithBuildArg("GROUP_ID", Environment.GetEnvironmentVariable("GID") ?? "1000")
+    .WithHttpEndpoint(port: 8080, targetPort: 8080, name: "http")
+    .WithEnvironment("APP_ENV", "local")
+    .WithEnvironment("APP_DEBUG", "true")
+    .WithBindMount("../../../credit_bureau", "/var/www/html");
+
 var web = builder
     .AddProject<Projects.Web>(Services.WebApi)
     .WithReference(databaseServer)
     .WithReference(kafka)
     .WithReference(redis)
     .WithReference(prometheus.GetEndpoint("http"))
+    .WithReference(creditBureau.GetEndpoint("http"))
     .WaitFor(databaseServer)
     .WithExternalHttpEndpoints()
     .WithAspNetCoreEnvironment()

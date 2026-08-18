@@ -9,7 +9,7 @@ namespace Unifintech.Application.Loans.Commands.CreateLoan;
 public record CreateLoanCommand : IRequest<Guid>
 {
     public string? LoanId { get; init; }
-    public string? CustomerId { get; init; }
+    public string? CustomerCpf { get; init; }
     public decimal? InitialAmount { get; init; }
     public decimal? InterestRate { get; init; }
     public int? TermInMonths { get; init; }
@@ -21,7 +21,7 @@ public class CreateLoanCommandValidator : AbstractValidator<CreateLoanCommand>
     {
         RuleFor(x => x.LoanId).NotEmpty().WithMessage("LoanId is required.");
 
-        RuleFor(x => x.CustomerId).NotEmpty().WithMessage("CustomerId is required.");
+        RuleFor(x => x.CustomerCpf).NotEmpty().WithMessage("CustomerId is required.");
 
         RuleFor(x => x.InitialAmount)
             .GreaterThan(0)
@@ -64,7 +64,7 @@ public class CreateLoanCommandHandler : IRequestHandler<CreateLoanCommand, Guid>
         var loan = new Domain.Entities.Loan
         {
             Id = Guid.Parse(request.LoanId!),
-            CustomerId = Guid.Parse(request.CustomerId!),
+            CustomerId = request.CustomerCpf!,
             EmployeeId = _currentUserService.GetCurrentUserId(),
             InitialAmount = request.InitialAmount!.Value,
             InterestRate = request.InterestRate!.Value,

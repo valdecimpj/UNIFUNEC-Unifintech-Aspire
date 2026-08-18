@@ -9,14 +9,17 @@ public class ValidateCreatedLoanCustomerScore : INotificationHandler<LoanCreated
 {
     private readonly ILogger<ValidateCreatedLoanCustomerScore> _logger;
     private readonly IApplicationDbContext _applicationDbContext;
+    private readonly ICustomerCreditService _customerCreditService;
 
     public ValidateCreatedLoanCustomerScore(
         ILogger<ValidateCreatedLoanCustomerScore> logger,
-        IApplicationDbContext applicationDbContext
+        IApplicationDbContext applicationDbContext,
+        ICustomerCreditService customerCreditService
     )
     {
         _logger = logger;
         _applicationDbContext = applicationDbContext;
+        _customerCreditService = customerCreditService;
     }
 
     public async Task Handle(LoanCreatedEvent notification, CancellationToken cancellationToken)
@@ -30,7 +33,20 @@ public class ValidateCreatedLoanCustomerScore : INotificationHandler<LoanCreated
             return;
         }
 
-        // validate the customer score and update the loan status accordingly
+        var customerScore = await _customerCreditService.GetCustomerCreditScoreAsync(
+            loan.CustomerId.ToString(),
+            cancellationToken
+        );
+
+        if (customerScore == null)
+            throw new Exception($"Customer score not found for customer ID {loan.CustomerId}");
+
+        if (customerScore < 600)
+        {
+            loan.LoanStatus = LoanStatus.Rejected;
+            await _applicationDbContext.SaveChangesAsync(cancellationToken);
+            return;
+        }
 
         loan.LoanStatus = LoanStatus.Approved;
         await _applicationDbContext.SaveChangesAsync(cancellationToken);

@@ -4,11 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http.Resilience;
 using Unifintech.Application.Common.Interfaces;
 using Unifintech.Infrastructure.Cache;
 using Unifintech.Infrastructure.Data;
 using Unifintech.Infrastructure.Data.Interceptors;
 using Unifintech.Infrastructure.Identity;
+using Unifintech.Infrastructure.Integrations;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -59,6 +61,24 @@ public static class DependencyInjection
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddTransient<IIdentityService, IdentityService>();
         builder.AddRedis();
+        builder.AddHttpIntegrations();
+    }
+
+    private static void AddHttpIntegrations(this IHostApplicationBuilder builder)
+    {
+        builder.Services.AddScoped<ICustomerCreditService, CustomerCreditService>();
+
+        builder
+            .Services.AddHttpClient<ICustomerCreditService, CustomerCreditService>(client =>
+            {
+                client.BaseAddress = new Uri(
+                    builder.Configuration["services:credit-bureau:http:0"]
+                        ?? throw new Exception(
+                            "Customer Credit Service base address not found in configuration."
+                        )
+                );
+            })
+            .AddStandardResilienceHandler();
     }
 
     private static void AddRedis(this IHostApplicationBuilder builder)

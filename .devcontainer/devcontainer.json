@@ -18,7 +18,7 @@
 	//		}
 	// }
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "dotnet tool install -g csharpier && dotnet tool install -g dotnet-ef && dotnet new install Ardalis.CleanArchitecture.Template && dotnet tool install -g Aspire.Cli",
+	"postCreateCommand": "dotnet tool install -g csharpier && dotnet tool install -g dotnet-ef && dotnet new install Clean.Architecture.Solution.Template && dotnet tool install -g Aspire.Cli",
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
@@ -27,7 +27,8 @@
 				"csharpier.csharpier-vscode",
 				"patcx.vscode-nuget-gallery",
 				"csharpier.csharpier-vscode",
-				"microsoft-aspire.aspire-vscode"
+				"microsoft-aspire.aspire-vscode",
+				"ms-dotnettools.csdevkit"
 			],
 			"settings": {
 				"editor.formatOnSave": true,

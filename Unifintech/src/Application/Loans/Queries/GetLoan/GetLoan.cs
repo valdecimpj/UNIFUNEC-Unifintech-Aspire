@@ -25,26 +25,40 @@ public class GetLoanQueryValidator : AbstractValidator<GetLoanQuery>
 public class GetLoanQueryHandler : IRequestHandler<GetLoanQuery, GetLoanVm?>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICustomerCreditService _customerCreditService;
 
-    public GetLoanQueryHandler(IApplicationDbContext context)
+    public GetLoanQueryHandler(
+        IApplicationDbContext context,
+        ICustomerCreditService customerCreditService
+    )
     {
         _context = context;
+        _customerCreditService = customerCreditService;
     }
 
     public async Task<GetLoanVm?> Handle(GetLoanQuery request, CancellationToken cancellationToken)
     {
         var loan = await _context
             .Loans.Where(l => l.Id == Guid.Parse(request.Id!))
-            .Select(l => new GetLoanVm(
-                l.Id,
-                l.CustomerId.ToString(),
-                l.EmployeeId,
-                l.InitialAmount,
-                l.InterestRate,
-                l.TermInMonths
-            ))
             .FirstOrDefaultAsync(cancellationToken);
 
-        return loan;
+        if (loan == null)
+            return null;
+
+        var currentCustomerCreditScore = await _customerCreditService.GetCustomerCreditScoreAsync(
+            loan.CustomerId,
+            cancellationToken
+        );
+
+        return new GetLoanVm(
+            loan.Id,
+            loan.CustomerId,
+            loan.EmployeeId,
+            loan.InitialAmount,
+            loan.InterestRate,
+            loan.TermInMonths,
+            loan.LoanStatus,
+            currentCustomerCreditScore
+        );
     }
 }

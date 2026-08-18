@@ -1,3 +1,5 @@
+using Unifintech.Domain.Enums;
+
 namespace Unifintech.Application.Loans.Queries.GetLoan;
 
 public record GetLoanVm(
@@ -6,5 +8,7 @@ public record GetLoanVm(
     string EmployeeId,
     decimal InitialAmount,
     decimal InterestRate,
-    int TermInMonths
+    int TermInMonths,
+    LoanStatus LoanStatus,
+    decimal? CurrentCustomerCreditScore
 );
