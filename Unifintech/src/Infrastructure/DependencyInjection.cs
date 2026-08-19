@@ -11,6 +11,7 @@ using Unifintech.Infrastructure.Data;
 using Unifintech.Infrastructure.Data.Interceptors;
 using Unifintech.Infrastructure.Identity;
 using Unifintech.Infrastructure.Integrations;
+using Unifintech.Infrastructure.Sub;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -62,6 +63,7 @@ public static class DependencyInjection
         builder.Services.AddTransient<IIdentityService, IdentityService>();
         builder.AddRedis();
         builder.AddHttpIntegrations();
+        builder.Services.AddSingleton<KafkaTopicInitializerService>();
     }
 
     private static void AddHttpIntegrations(this IHostApplicationBuilder builder)
@@ -78,7 +80,13 @@ public static class DependencyInjection
                         )
                 );
             })
-            .AddStandardResilienceHandler();
+            .AddStandardResilienceHandler(configuration =>
+            {
+                configuration.Retry = new()
+                {
+                    MaxRetryAttempts = 3
+                };
+            });
     }
 
     private static void AddRedis(this IHostApplicationBuilder builder)

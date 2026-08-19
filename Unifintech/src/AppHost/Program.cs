@@ -31,6 +31,7 @@ var web = builder
     .WithReference(prometheus.GetEndpoint("http"))
     .WithReference(creditBureau.GetEndpoint("http"))
     .WaitFor(databaseServer)
+    .WaitFor(kafka)
     .WithExternalHttpEndpoints()
     .WithAspNetCoreEnvironment()
     .WithUrlForEndpoint(

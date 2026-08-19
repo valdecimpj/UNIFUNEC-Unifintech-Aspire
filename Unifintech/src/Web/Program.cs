@@ -1,5 +1,6 @@
 using Scalar.AspNetCore;
 using Unifintech.Infrastructure.Data;
+using Unifintech.Infrastructure.Sub;
 using Unifintech.Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +19,18 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     await app.InitialiseDatabaseAsync();
+    var kafkaTopicInitializer = app.Services.GetRequiredService<KafkaTopicInitializerService>();
+
+    var topics = new List<string>
+    {
+        "employee-fired-event",
+        "loan-created-event",
+    };
+
+    foreach (var topic in topics)
+    {
+        await kafkaTopicInitializer.EnsureTopicExistsAsync(topic);
+    }
 }
 else
 {
