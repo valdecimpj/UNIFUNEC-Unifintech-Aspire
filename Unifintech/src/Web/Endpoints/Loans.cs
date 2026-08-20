@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Unifintech.Application.Loans.Commands.CreateLoan;
+using Unifintech.Application.Loans.Queries.Application;
+using Unifintech.Application.Loans.Queries.GetAllLoans;
 using Unifintech.Application.Loans.Queries.GetLoan;
 
 namespace Unifintech.Web.Endpoints;
@@ -11,6 +13,7 @@ public class Loans : IEndpointGroup
     {
         groupBuilder.MapPost(CreateLoan);
         groupBuilder.MapGet(GetLoan, "{id}");
+        groupBuilder.MapGet(GetAllLoans);
     }
 
     [EndpointSummary("Create a new loan")]
@@ -37,5 +40,15 @@ public class Loans : IEndpointGroup
             return TypedResults.NotFound();
 
         return TypedResults.Ok(loan);
+    }
+
+    [EndpointSummary("Get all loans")]
+    [EndpointDescription("Retrieves all loans.")]
+    public async static Task<Results<Ok<GetAllLoansVm>, InternalServerError>> GetAllLoans(
+        [FromServices] IMediator mediator
+    )
+    {
+        var loans = await mediator.Send(new GetAllLoansQuery());
+        return TypedResults.Ok(loans);
     }
 }
