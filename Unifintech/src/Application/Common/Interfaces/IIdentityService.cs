@@ -9,6 +9,7 @@ public interface IIdentityService
     Task<bool> IsInRoleAsync(string userId, string role);
 
     Task<bool> AuthorizeAsync(string userId, string policyName);
+    Task<UserDto?> GetUserByEmail(string email);
 
     Task<(Result Result, string UserId)> CreateUserAsync(string userName, string password);
 
@@ -17,3 +18,5 @@ public interface IIdentityService
     Task<Result> AddUserToRoleAsync(string userId, string role);
     Task<IList<string>> GetUserRolesAsync(string userId);
 }
+
+public record UserDto(string Id, string email, IEnumerable<string> Roles);
