@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Http.Resilience;
+using Polly;
 using Unifintech.Application.Common.Interfaces;
 using Unifintech.Infrastructure.Cache;
 using Unifintech.Infrastructure.Data;
@@ -80,11 +80,36 @@ public static class DependencyInjection
                         )
                 );
             })
-            .AddStandardResilienceHandler(configuration =>
+            .AddStandardResilienceHandler(options =>
             {
-                configuration.Retry = new()
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(1);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(10);
+
+                options.Retry.MaxRetryAttempts = 3;
+                options.Retry.BackoffType = DelayBackoffType.Constant;
+                options.Retry.Delay = TimeSpan.FromMilliseconds(10);
+
+                options.CircuitBreaker.MinimumThroughput = 2; 
+                options.CircuitBreaker.FailureRatio = 1.0;
+                options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(10);
+                options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(30);
+
+                options.CircuitBreaker.OnOpened = args =>
                 {
-                    MaxRetryAttempts = 3
+                    Console.WriteLine($"[CIRCUIT BREAKER ALERT]: Circuit transitioned to OPEN for {args.BreakDuration.TotalSeconds} seconds.");
+                    return ValueTask.CompletedTask;
+                };
+
+                options.CircuitBreaker.OnClosed = args =>
+                {
+                    Console.WriteLine("[CIRCUIT BREAKER ALERT]: Circuit is back to CLOSED.");
+                    return ValueTask.CompletedTask;
+                };
+
+                options.CircuitBreaker.OnHalfOpened = args =>
+                {
+                    Console.WriteLine("[CIRCUIT BREAKER ALERT]: Circuit is HALF-OPEN. Testing next request.");
+                    return ValueTask.CompletedTask;
                 };
             });
     }
